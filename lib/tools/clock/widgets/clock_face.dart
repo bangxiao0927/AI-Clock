@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// A minimal analog clock face showing [time].
 class ClockFace extends StatelessWidget {

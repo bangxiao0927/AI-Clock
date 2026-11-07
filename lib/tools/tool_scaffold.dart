@@ -2,53 +2,56 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 import '../core/widgets/fade_slide_in.dart';
-import '../core/widgets/feature_icon.dart';
-import 'app_feature.dart';
+import '../core/widgets/tool_icon.dart';
+import 'app_tool.dart';
 
-/// Shared layout for the three feature screens: back button, icon + title
-/// header, then the screen's content cards fading in one after another.
-class FeatureScaffold extends StatelessWidget {
-  const FeatureScaffold({
-    super.key,
-    required this.feature,
-    required this.children,
-  });
+/// Shared layout for every tool screen: an icon + title header, then the
+/// screen's cards fading in one after another.
+///
+/// The background is transparent (the app shell paints it) and the list leaves
+/// room at the bottom, so content scrolls underneath the glass tab bar.
+class ToolScaffold extends StatelessWidget {
+  const ToolScaffold({super.key, required this.info, required this.children});
 
-  final AppFeature feature;
+  final ToolInfo info;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    // Includes the height of the tab bar, because the shell extends the body
+    // behind it.
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
-      appBar: AppBar(),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
-        top: false,
+        bottom: false,
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+              padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset + 24),
               children: [
                 Row(
                   children: [
-                    Hero(
-                      tag: feature.heroTag,
-                      child: FeatureIcon(
-                        icon: feature.icon,
-                        color: feature.color,
-                      ),
-                    ),
+                    ToolIcon(icon: info.icon, color: info.color),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(feature.title, style: textTheme.headlineMedium),
+                          Semantics(
+                            header: true,
+                            child: Text(
+                              info.title,
+                              style: textTheme.headlineMedium,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
-                            feature.description,
+                            info.description,
                             style: textTheme.bodyMedium?.copyWith(
                               color: AppColors.textMuted,
                             ),

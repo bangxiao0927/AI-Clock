@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'core/constants.dart';
-import 'core/theme/app_theme.dart';
-import 'features/splash/splash_screen.dart';
+import '../core/constants.dart';
+import '../core/theme/app_theme.dart';
+import 'app_router.dart';
+import 'routes.dart';
 
 /// Root widget. The app always starts on the animated splash screen.
 class AiClockApp extends StatelessWidget {
@@ -14,7 +15,8 @@ class AiClockApp extends StatelessWidget {
       title: AppInfo.name,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: const SplashScreen(),
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

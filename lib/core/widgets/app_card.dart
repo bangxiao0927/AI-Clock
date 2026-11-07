@@ -31,11 +31,12 @@ class _AppCardState extends State<AppCard> {
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
       child: Material(
-        color: AppColors.surface,
+        // Translucent so the ambient background shows through, like glass.
+        color: AppColors.glassFill,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.outline),
+          side: const BorderSide(color: AppColors.glassBorder),
         ),
         child: InkWell(
           onTap: onTap,

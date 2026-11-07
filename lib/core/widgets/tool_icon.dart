@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// A tinted rounded tile holding a feature's icon.
-class FeatureIcon extends StatelessWidget {
-  const FeatureIcon({
+/// A tinted rounded tile holding a tool's icon.
+class ToolIcon extends StatelessWidget {
+  const ToolIcon({
     super.key,
     required this.icon,
     required this.color,

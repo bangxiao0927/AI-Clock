@@ -1,32 +1,34 @@
 # AI clock 1
 
-**AI clock 1** is a small, calm Flutter app built around three things: the **Clock**, your **Day**, and your **Notes**. This first version is a clean foundation: an animated splash screen, a main menu with smooth transitions, and three separate feature screens with lightweight placeholder content.
+**AI clock 1** is a small, calm Flutter app built around three tools: the **Clock**, your **Day**, and your **Notes**. It has an animated splash screen and a floating frosted-glass tab bar. Each tool lives in its own folder, so adding a fourth is a few lines.
 
 | | |
 |---|---|
 | **App name** | `AI clock 1` (shown under the launcher icon on Android and iOS) |
 | **Dart package** | `ai_clock_1` |
 | **Platforms** | Android, iOS |
-| **Look** | Dark theme, one restrained accent colour per feature |
+| **Look** | Dark theme, glass tab bar and cards, one restrained accent colour per tab |
 | **Dependencies** | Flutter SDK only, no third-party packages |
 
 ## Screen structure
 
 ```
 Splash (animated logo)
-   └─► Main menu
-          ├─► Clock
-          ├─► Day
-          └─► Notes
+   └─► App shell, with a floating glass tab bar
+          ├─ Home    greeting + a card for every tool
+          ├─ Clock
+          ├─ Day
+          └─ Notes
 ```
 
-1. **Splash** – the logo draws itself in (badge, ring, clock hands, AI spark), the app name fades up, then the app cross-fades into the menu while the logo flies into the menu header.
-2. **Main menu** – the logo and name, then one card per feature, fading in one after another. Tapping a card opens that feature; its icon flies into the new screen's header.
-3. **Feature screens** – Clock, Day and Notes share one layout (back button, icon and title, content cards) so they feel consistent.
+1. **Splash** – the logo draws itself in (badge, ring, hands, AI spark), the name fades up, then the app cross-fades into the shell while the logo flies into the Home header.
+2. **App shell** – a pill-shaped tab bar of frosted glass floats at the bottom. A tinted capsule slides to the selected tab, and the pages cross-fade. Content scrolls underneath the bar and shows through the blur. Tabs are built the first time they are opened and then keep their state. *Back* returns to Home first, then leaves the app.
+3. **Home** – the app name, a time-of-day greeting, and one card per tool. Tapping a card switches to that tool's tab.
+4. **Tool screens** – all three share one layout (`ToolScaffold`: icon and title, then cards fading in one after another).
 
-## The three features
+## The three tools
 
-| Feature | What it does today | Planned |
+| Tool | What it does today | Planned |
 |---|---|---|
 | **Clock** | Live analog face plus digital time and date (follows the device's 12/24-hour setting) | Alarms, timers, world clocks |
 | **Day** | Today's weekday and date, with a "day progress" bar | Schedule and reminders |
@@ -36,27 +38,40 @@ Splash (animated logo)
 
 ```
 lib/
-├── main.dart                  entry point
-├── app.dart                   MaterialApp: title, theme, first screen
-├── core/                      shared by every feature
-│   ├── constants.dart         app name and tagline
-│   ├── theme/app_theme.dart   colour tokens and the dark theme
-│   ├── transitions/           fade route used after the splash
-│   ├── utils/                 small date/time formatting helpers
-│   └── widgets/               logo, card, fade-in, icon tile, placeholder card
-└── features/
-    ├── app_feature.dart       the three features: title, icon, accent colour
-    ├── feature_scaffold.dart  layout shared by the feature screens
-    ├── splash/                animated splash screen
-    ├── menu/                  main menu
-    ├── clock/                 Clock feature
-    ├── day/                   Day feature
-    └── notes/                 Notes feature
-tool/generate_icons.dart       regenerates the launcher icons from the logo
-test/widget_test.dart          splash → menu → each feature
+├── main.dart                     entry point
+├── app/
+│   ├── app.dart                  MaterialApp: theme and routes
+│   ├── routes.dart               route names
+│   ├── app_router.dart           route name -> page
+│   └── app_shell.dart            tab shell: glass tab bar + tabs
+├── core/                         shared building blocks (no tool code)
+│   ├── constants.dart            app name and tagline
+│   ├── theme/app_theme.dart      colour tokens and the dark theme
+│   ├── transitions/              fade route used after the splash
+│   ├── utils/                    date/time formatting helpers
+│   └── widgets/                  glass container + tab bar, cards, logo, fade-in, ...
+├── features/                     app-level screens
+│   ├── splash/
+│   └── home/
+└── tools/                        one folder per tool
+    ├── app_tool.dart             ToolInfo (title, icon, colour) and AppTool
+    ├── tool_registry.dart        the list of tools: add yours here
+    ├── tool_scaffold.dart        layout shared by the tool screens
+    ├── clock/                    clock_tool.dart, clock_screen.dart, widgets/
+    ├── day/                      day_tool.dart, day_screen.dart, widgets/
+    └── notes/                    notes_tool.dart, notes_screen.dart, widgets/
+tool/generate_icons.dart          regenerates the launcher icons from the logo
+test/widget_test.dart             splash, tab bar, Home cards, back handling
 ```
 
-Each feature lives in its own folder, so it can grow (data, state, widgets) without touching the others.
+Layering: `core` imports nothing else from the app, and `tools` import only `core` (and each other's `ToolInfo`), so a tool never depends on the shell or on another tool's screen. `app` and `features` sit on top; the splash navigates by name through `app/routes.dart`, which holds names only.
+
+## Adding a tool
+
+1. Create `lib/tools/<name>/` with `<name>_tool.dart` (a `const ToolInfo`: id, title, description, icon, colour) and `<name>_screen.dart` (a screen built on `ToolScaffold`).
+2. Add one `AppTool(info: ..., builder: ...)` line to `lib/tools/tool_registry.dart`.
+
+The tab bar and the Home screen pick it up automatically. The tab bar suits about 3 to 4 tools; with more, keep the extras on Home only.
 
 ## Run it in Android Studio
 
@@ -81,6 +96,7 @@ flutter test
 
 ## Design notes
 
-- **Motion** is short and eased (about 0.5 s per element). Page changes use the platform's own transition: a slide with swipe-back on iOS, a fade-forward on Android. If the system's "reduce motion" setting is on, the splash animation and the fade-ins are skipped.
-- **The logo** is drawn in code (`LogoPainter`): a clock face whose 12 o'clock mark is an AI spark. The launcher icons are generated from the same painter, so they always match. After changing the logo, run `flutter test tool/generate_icons.dart`.
+- **Glass** – `GlassContainer` blurs what is behind it, adds a faint white tint and a thin gradient edge. It is used only for the tab bar, because every glass surface costs a backdrop blur per frame. Cards use a cheaper translucent fill and border in the same style.
+- **Motion** – short and eased (about 0.3 to 0.5 s). If the system's "reduce motion" setting is on, the splash animation, the fade-ins and the tab cross-fade are skipped.
+- **Logo and icons** – the logo is drawn in code (`LogoPainter`): a clock face whose 12 o'clock mark is an AI spark. The launcher icons are generated from the same painter, so they always match. After changing the logo, run `flutter test tool/generate_icons.dart`.
 - **Launch screens** (Android and iOS) use the app's dark background, so there is no white flash before the splash.

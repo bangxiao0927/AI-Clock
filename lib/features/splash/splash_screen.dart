@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../app/routes.dart';
 import '../../core/constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/transitions/fade_route.dart';
 import '../../core/widgets/app_logo.dart';
-import '../menu/main_menu_screen.dart';
 
 /// Animated splash: the logo draws itself in (badge, ring, hands, spark), the
-/// name fades up beneath it, then the app cross-fades into the main menu while
-/// the logo flies up into the menu header.
+/// name fades up beneath it, then the app cross-fades into the main screen
+/// while the logo flies up into the Home header.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -19,7 +18,6 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   static const _duration = Duration(milliseconds: 2600);
-  static const _exitDuration = Duration(milliseconds: 700);
 
   late final AnimationController _controller = AnimationController(
     vsync: this,
@@ -46,11 +44,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _onStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed || !mounted) return;
-    Navigator.of(context).pushReplacement(
-      FadeRoute<void>(
-        builder: (_) => const MainMenuScreen(),
-        duration: _reduceMotion ? Duration.zero : _exitDuration,
-      ),
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.shell,
+      arguments: ShellRouteArgs(instant: _reduceMotion),
     );
   }
 

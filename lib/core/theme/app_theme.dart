@@ -11,12 +11,17 @@ abstract final class AppColors {
   static const textPrimary = Color(0xFFECEFF4);
   static const textMuted = Color(0xFF9AA3B2);
 
+  // Translucent "glass" fill and edge used by cards (white at 5% / 10%).
+  static const glassFill = Color(0x0DFFFFFF);
+  static const glassBorder = Color(0x1AFFFFFF);
+
   // Brand (logo gradient and spark).
   static const brandStart = Color(0xFF4F7CFF);
   static const brandEnd = Color(0xFF8B5CF6);
   static const spark = Color(0xFFFFC857);
 
-  // One restrained accent per feature area.
+  // One restrained accent per tab: Home plus each tool.
+  static const homeAccent = Color(0xFFA78BFA);
   static const clockAccent = Color(0xFF5B8DEF);
   static const dayAccent = Color(0xFFF5B14C);
   static const notesAccent = Color(0xFF4FD1A5);
