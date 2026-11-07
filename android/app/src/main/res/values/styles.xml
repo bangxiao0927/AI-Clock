@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app is dark-only, so one pair of themes covers light and dark system modes.
+         LaunchTheme is shown while the process starts; the dark window background
+         matches the Flutter splash screen so there is no white flash. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <!-- Applied once the Flutter engine is up; sets the window colour behind the Flutter UI. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/launch_background</item>
+    </style>
+</resources>
