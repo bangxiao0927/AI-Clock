@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/feedback_context.dart';
 import '../theme/app_theme.dart';
 
 /// The one card style used across the app. Tappable when [onTap] is set, with
@@ -39,7 +40,7 @@ class _AppCardState extends State<AppCard> {
           side: const BorderSide(color: AppColors.glassBorder),
         ),
         child: InkWell(
-          onTap: onTap,
+          onTap: onTap == null ? null : context.tapped(onTap),
           onHighlightChanged: onTap == null
               ? null
               : (value) => setState(() => _pressed = value),

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app/app.dart';
+import 'app/app_services.dart';
 import 'core/theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -15,5 +16,8 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
-  runApp(const AiClockApp());
+  // Open saved data and set up notifications before the first frame, so every
+  // screen can read its saved state straight away.
+  final services = await AppServices.create();
+  runApp(AiClockApp(services: services));
 }

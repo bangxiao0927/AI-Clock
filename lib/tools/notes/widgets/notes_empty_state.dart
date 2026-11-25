@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/services/feedback_context.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Shown by the Notes tool until there are notes to list.
 class NotesEmptyState extends StatelessWidget {
-  const NotesEmptyState({super.key, required this.accent});
+  const NotesEmptyState({
+    super.key,
+    required this.accent,
+    required this.onNewNote,
+  });
 
   final Color accent;
+  final VoidCallback onNewNote;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +27,7 @@ class NotesEmptyState extends StatelessWidget {
           Text('No notes yet', style: textTheme.titleLarge),
           const SizedBox(height: 6),
           Text(
-            'Capture quick thoughts here. Your notes will appear in this space.',
+            'Capture quick thoughts here. Your notes are saved on this device.',
             textAlign: TextAlign.center,
             style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
           ),
@@ -31,13 +37,7 @@ class NotesEmptyState extends StatelessWidget {
               backgroundColor: accent,
               foregroundColor: AppColors.background,
             ),
-            onPressed: () => ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                const SnackBar(
-                  content: Text('The note editor is coming soon.'),
-                ),
-              ),
+            onPressed: context.tapped(onNewNote),
             icon: const Icon(Icons.add_rounded),
             label: const Text('New note'),
           ),

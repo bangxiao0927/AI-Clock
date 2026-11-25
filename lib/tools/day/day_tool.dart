@@ -6,7 +6,7 @@ import '../app_tool.dart';
 const dayInfo = ToolInfo(
   id: 'day',
   title: 'Day',
-  description: "Today's date and how far along it is",
+  description: 'Your plan and reminders for the day',
   icon: Icons.today_rounded,
   color: AppColors.dayAccent,
 );

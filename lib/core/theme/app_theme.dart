@@ -25,6 +25,7 @@ abstract final class AppColors {
   static const clockAccent = Color(0xFF5B8DEF);
   static const dayAccent = Color(0xFFF5B14C);
   static const notesAccent = Color(0xFF4FD1A5);
+  static const optionsAccent = Color(0xFFF472B6);
 }
 
 /// The single app theme (dark).

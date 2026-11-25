@@ -6,7 +6,7 @@ import '../app_tool.dart';
 const clockInfo = ToolInfo(
   id: 'clock',
   title: 'Clock',
-  description: 'Live time on a calm analog face',
+  description: 'World clocks, alarms, stopwatch and timer',
   icon: Icons.schedule_rounded,
   color: AppColors.clockAccent,
 );

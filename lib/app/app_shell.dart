@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../core/services/feedback_context.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/ambient_background.dart';
 import '../core/widgets/fade_indexed_stack.dart';
 import '../core/widgets/glass_tab_bar.dart';
 import '../features/home/home_screen.dart';
-import '../tools/app_tool.dart';
+import '../features/settings/settings_screen.dart';
+import '../tools/clock/clock_tool.dart';
 import '../tools/tool_registry.dart';
 
-/// The main screen: a floating glass tab bar with Home plus one tab per tool.
+/// The main screen: a floating glass tab bar with Home, one tab per tool, and
+/// Options.
 ///
-/// Tab 0 is Home; tab `i + 1` is `appTools[i]`. Tabs are built the first time
-/// they are opened and then kept alive.
+/// Tab 0 is Home, tabs 1..n are `appTools`, and the last tab is Options. Tabs
+/// are built the first time they are opened and then kept alive.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -22,16 +24,26 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   static const _homeIndex = 0;
+  static final _optionsIndex = appTools.length + 1;
 
   int _index = _homeIndex;
 
   void _select(int index) {
     if (index == _index) return;
-    HapticFeedback.selectionClick();
+    context.tapFeedback();
     setState(() => _index = index);
   }
 
-  void _openTool(AppTool tool) => _select(appTools.indexOf(tool) + 1);
+  void _openClock() {
+    final position = appTools.indexWhere((t) => t.info.id == clockInfo.id);
+    if (position >= 0) _select(position + 1);
+  }
+
+  Widget _page(BuildContext context, int index) {
+    if (index == _homeIndex) return HomeScreen(onOpenClock: _openClock);
+    if (index == _optionsIndex) return const SettingsScreen();
+    return appTools[index - 1].builder(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +59,11 @@ class _AppShellState extends State<AppShell> {
           label: tool.info.title,
           color: tool.info.color,
         ),
+      GlassTabItem(
+        icon: settingsInfo.icon,
+        label: settingsInfo.title,
+        color: settingsInfo.color,
+      ),
     ];
 
     // Back goes to Home first, and only leaves the app from Home.
@@ -66,9 +83,7 @@ class _AppShellState extends State<AppShell> {
           child: FadeIndexedStack(
             index: _index,
             itemCount: items.length,
-            itemBuilder: (context, index) => index == _homeIndex
-                ? HomeScreen(onOpenTool: _openTool)
-                : appTools[index - 1].builder(context),
+            itemBuilder: _page,
           ),
         ),
       ),

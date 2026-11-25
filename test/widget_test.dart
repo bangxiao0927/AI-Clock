@@ -1,8 +1,10 @@
 import 'package:ai_clock_1/app/app.dart';
 import 'package:ai_clock_1/app/app_shell.dart';
 import 'package:ai_clock_1/core/constants.dart';
+import 'package:ai_clock_1/core/services/sound_service.dart';
 import 'package:ai_clock_1/core/widgets/glass_tab_bar.dart';
 import 'package:ai_clock_1/features/home/home_screen.dart';
+import 'package:ai_clock_1/features/settings/settings_screen.dart';
 import 'package:ai_clock_1/features/splash/splash_screen.dart';
 import 'package:ai_clock_1/tools/clock/clock_screen.dart';
 import 'package:ai_clock_1/tools/day/day_screen.dart';
@@ -12,18 +14,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Pumps the app on a phone-sized screen and waits out the splash screen.
-Future<void> pumpAppPastSplash(WidgetTester tester) async {
-  tester.view.physicalSize = const Size(390, 844);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
+import 'support/test_app.dart';
 
-  await tester.pumpWidget(const AiClockApp());
-  await tester.pump(const Duration(milliseconds: 2700));
-  await tester.pumpAndSettle();
-}
-
-/// A label inside the glass tab bar (Home also shows the tool names).
+/// A label inside the glass tab bar (Home also shows some of the same words).
 Finder tabLabel(String label) =>
     find.descendant(of: find.byType(GlassTabBar), matching: find.text(label));
 
@@ -44,11 +37,12 @@ void main() {
   testWidgets('splash screen leads to the app shell on the Home tab', (
     tester,
   ) async {
+    final env = await makeEnv();
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const AiClockApp());
+    await tester.pumpWidget(AiClockApp(services: env.services));
     expect(find.byType(SplashScreen), findsOneWidget);
     expect(find.text(AppInfo.name), findsOneWidget);
 
@@ -59,22 +53,76 @@ void main() {
     expect(find.byType(AppShell), findsOneWidget);
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(selectedTab(tester), 0);
-    for (final label in ['Home', 'Clock', 'Day', 'Notes']) {
+    for (final label in ['Home', 'Clock', 'Day', 'Notes', 'Options']) {
       expect(tabLabel(label), findsOneWidget);
     }
+  });
+
+  testWidgets('Home shows the local clock and the world clocks', (
+    tester,
+  ) async {
+    final env = await makeEnv();
+    await pumpApp(tester, env);
+
+    expect(find.text('CLOCKS'), findsOneWidget);
+    expect(find.text('Local time'), findsOneWidget);
+    expect(find.text('WORLD CLOCKS'), findsOneWidget);
+    // The default cities.
+    for (final city in ['New York', 'London', 'Tokyo', 'Sydney']) {
+      expect(find.text(city), findsOneWidget, reason: city);
+    }
+    // The old tool cards are gone: the tab bar is how you reach the tools.
+    expect(find.text('TOOLS'), findsNothing);
+  });
+
+  testWidgets('Home reflects the saved world clocks', (tester) async {
+    final env = await makeEnv(prefs: {'world.cityIds': '["paris"]'});
+    await pumpApp(tester, env);
+
+    expect(find.text('Paris'), findsOneWidget);
+    expect(find.text('Tokyo'), findsNothing);
+  });
+
+  testWidgets('Home shows the next alarm on the local clock', (tester) async {
+    final env = await makeEnv();
+    env.services.alarms.add(hour: 10, minute: 0);
+    await pumpApp(tester, env);
+
+    expect(find.textContaining('10:00 AM'), findsOneWidget);
+    expect(find.textContaining('Today'), findsWidgets);
+  });
+
+  testWidgets('tapping a world clock on Home opens the Clock tab', (
+    tester,
+  ) async {
+    final env = await makeEnv();
+    await pumpApp(tester, env);
+
+    await tester.tap(find.text('Tokyo'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ClockScreen), findsOneWidget);
+    expect(selectedTab(tester), 1);
   });
 
   testWidgets('tools are built lazily and the tab bar switches between them', (
     tester,
   ) async {
-    await pumpAppPastSplash(tester);
+    final env = await makeEnv();
+    await pumpApp(tester, env);
 
     // Nothing but Home has been built yet.
     expect(find.byType(ClockScreen), findsNothing);
     expect(find.byType(DayScreen), findsNothing);
     expect(find.byType(NotesScreen), findsNothing);
+    expect(find.byType(SettingsScreen), findsNothing);
 
-    const tabs = {'Clock': ClockScreen, 'Day': DayScreen, 'Notes': NotesScreen};
+    const tabs = {
+      'Clock': ClockScreen,
+      'Day': DayScreen,
+      'Notes': NotesScreen,
+      'Options': SettingsScreen,
+    };
     var expectedIndex = 1;
     for (final entry in tabs.entries) {
       await tester.tap(tabLabel(entry.key));
@@ -89,7 +137,8 @@ void main() {
   });
 
   testWidgets('the tab that was left fades out completely', (tester) async {
-    await pumpAppPastSplash(tester);
+    final env = await makeEnv();
+    await pumpApp(tester, env);
 
     double opacityOf(Type screen) => tester
         .renderObject<RenderAnimatedOpacity>(
@@ -112,20 +161,9 @@ void main() {
     expect(opacityOf(ClockScreen), 1);
   });
 
-  testWidgets('a Home card opens that tool\'s tab', (tester) async {
-    await pumpAppPastSplash(tester);
-
-    await tester.tap(
-      find.descendant(of: find.byType(HomeScreen), matching: find.text('Day')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(DayScreen), findsOneWidget);
-    expect(selectedTab(tester), 2);
-  });
-
   testWidgets('back returns to Home before leaving the app', (tester) async {
-    await pumpAppPastSplash(tester);
+    final env = await makeEnv();
+    await pumpApp(tester, env);
 
     await tester.tap(tabLabel('Notes'));
     await tester.pumpAndSettle();
@@ -134,5 +172,57 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(selectedTab(tester), 0);
+  });
+
+  group('click sounds', () {
+    testWidgets('tapping a tab plays the tap sound', (tester) async {
+      final env = await makeEnv();
+      await pumpApp(tester, env);
+      env.player.played.clear();
+
+      await tester.tap(tabLabel('Day'));
+      await tester.pumpAndSettle();
+
+      expect(env.player.played, [Sfx.tap]);
+    });
+
+    testWidgets('tapping the tab you are already on is silent', (tester) async {
+      final env = await makeEnv();
+      await pumpApp(tester, env);
+      env.player.played.clear();
+
+      await tester.tap(tabLabel('Home'));
+      await tester.pumpAndSettle();
+
+      expect(env.player.played, isEmpty);
+    });
+
+    testWidgets('a card tap plays the tap sound', (tester) async {
+      final env = await makeEnv();
+      await pumpApp(tester, env);
+      env.player.played.clear();
+
+      await tester.tap(find.text('Tokyo'));
+      await tester.pumpAndSettle();
+
+      // One for the card, one for the tab switch it causes.
+      expect(env.player.played, [Sfx.tap, Sfx.tap]);
+    });
+
+    testWidgets('nothing plays once sound effects are switched off', (
+      tester,
+    ) async {
+      final env = await makeEnv(prefs: {'settings.soundEffects': false});
+      await pumpApp(tester, env);
+
+      await tester.tap(tabLabel('Day'));
+      await tester.pumpAndSettle();
+      await tester.tap(tabLabel('Home'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tokyo'));
+      await tester.pumpAndSettle();
+
+      expect(env.player.played, isEmpty);
+    });
   });
 }
